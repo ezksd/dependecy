@@ -1,8 +1,10 @@
+package test;
+
 import context.Bean;
 
 public class Person {
-    String name;
-    String number;
+    public String name;
+    public String number;
 
     public Person() {
 
@@ -21,6 +23,7 @@ public class Person {
 
     @Bean("number")
     public String fun2() {
-        return "1234567";
+        return "123456";
     }
+
 }

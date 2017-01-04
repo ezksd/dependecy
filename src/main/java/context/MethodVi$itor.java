@@ -11,6 +11,7 @@ class MethodVi$itor extends MethodVisitor {
     private Context context;
     private FactoryMethod factoryMethod;
     private String beanName;
+    private BeanType type;
     private int index;
 
     MethodVi$itor(Context context, FactoryMethod factoryMethod) {
@@ -29,8 +30,14 @@ class MethodVi$itor extends MethodVisitor {
         return desc.equals(beanDesc) ? new AnnotationVisitor(ASM4) {
             @Override
             public void visit(String name, Object value) {
-                if("value".equals(name)&& value instanceof String)
+                if (value instanceof String) {
                     beanName = (String) value;
+                }
+            }
+
+            @Override
+            public void visitEnum(String name, String desc, String value) {
+                type = BeanType.valueOf(value);
             }
         } : null;
     }
@@ -38,7 +45,11 @@ class MethodVi$itor extends MethodVisitor {
     @Override
     public void visitEnd() {
         if (beanName != null) {
-            context.addBean(beanName, new BeanWrapper(factoryMethod));
+            if (type == BeanType.PROTOTYPE) {
+                context.addBean(beanName, factoryMethod);
+            } else {
+                context.addBean(beanName, new BeanWrapper(factoryMethod));
+            }
         }
     }
 }

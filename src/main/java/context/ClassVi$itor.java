@@ -26,7 +26,7 @@ public class ClassVi$itor extends ClassVisitor {
         return isPublic(accFlag) && isPublic(access) ? new MethodVi$itor(context, new FactoryMethod(className, name, access, desc)) : null;
     }
 
-    boolean isPublic(int acc) {
+    private boolean isPublic(int acc) {
         return (acc & ACC_PUBLIC) != 0;
     }
 }
