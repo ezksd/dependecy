@@ -1,5 +1,6 @@
 package metadata;
 
+import context.Context;
 import org.objectweb.asm.Type;
 
 import java.lang.invoke.MethodHandle;
@@ -14,7 +15,7 @@ public class FactoryMethod {
     private int access;
     private String desc;
     private String[] paramNames;
-    MethodHandle methodHandle;
+    MethodHandle handle;
 
     public FactoryMethod(String className, String methodName, int access, String desc) {
         this.className = className;
@@ -29,13 +30,10 @@ public class FactoryMethod {
         paramNames[index] = className;
     }
 
-
-
-    public FactoryFunc resolve() {
+    public void resolve() {
         MethodHandles.Lookup lookup = MethodHandles.lookup();
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
         Class<?> klass = null;
-        MethodHandle handle = null;
         try {
             klass = classloader.loadClass(className);
         } catch (ClassNotFoundException e) {
@@ -44,9 +42,6 @@ public class FactoryMethod {
         }
 
         MethodType methodType = MethodType.fromMethodDescriptorString(desc, classloader);
-        int length = paramNames.length;
-        Object[] parameters = new Object[length];
-
 
         try {
             if (methodName.equals("<init>")) {//constructor
@@ -60,13 +55,27 @@ public class FactoryMethod {
             e.printStackTrace();
             System.exit(1);
         }
+    }
 
-        MethodHandle handle1 = handle;
-        return c -> {
-            for (int i = 0; i < length; i++) {
-                parameters[i] = c.getBean(paramNames[i]);
-            }
-            return handle1.invokeWithArguments(parameters);
-        };
+    public Object produce(Context context) {
+
+        if(handle==null)
+            resolve();
+        
+        int length = paramNames.length;
+        Object[] parameters = new Object[length];
+
+        for (int i = 0; i < length; i++) {
+            parameters[i] = context.getBean(paramNames[i]);
+        }
+
+        try {
+            return handle.invokeWithArguments(parameters);
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
+            System.exit(1);
+        }
+
+        return null;
     }
 }
