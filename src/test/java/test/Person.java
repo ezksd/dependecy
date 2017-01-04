@@ -1,11 +1,9 @@
 package test;
-
 import context.Bean;
 
 public class Person {
     public String name;
     public String number;
-
     public Person() {
 
     }
@@ -25,5 +23,4 @@ public class Person {
     public String fun2() {
         return "123456";
     }
-
 }
