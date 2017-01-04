@@ -1,16 +1,15 @@
 package context;
 
-import metadata.FactoryMethod;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
-import static context.Utils.isPublic;
+import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static org.objectweb.asm.Opcodes.ASM4;
 
 public class ClassVi$itor extends ClassVisitor {
-    int accFlag;
-    String className;
-    Context context;
+    private int accFlag;
+    private String className;
+    private Context context;
     ClassVi$itor(Context context) {
         super(ASM4);
         this.context = context;
@@ -27,4 +26,7 @@ public class ClassVi$itor extends ClassVisitor {
         return isPublic(accFlag) && isPublic(access) ? new MethodVi$itor(context, new FactoryMethod(className, name, access, desc)) : null;
     }
 
+    boolean isPublic(int acc) {
+        return (acc & ACC_PUBLIC) != 0;
+    }
 }

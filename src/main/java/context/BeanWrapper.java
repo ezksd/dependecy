@@ -1,21 +1,16 @@
 package context;
 
-import metadata.FactoryFunc;
+class BeanWrapper {
+    private Object value;
+    private FactoryMethod method;
 
-public class BeanWrapper {
-    Object value;
-    FactoryFunc func;
-    public BeanWrapper(FactoryFunc func) {
-        this.func = func;
+    BeanWrapper(FactoryMethod method) {
+        this.method = method;
     }
 
     Object get(Context context) {
         if (value == null) {
-            try {
-                value = func.produce(context);
-            } catch (Throwable throwable) {
-                throwable.printStackTrace();
-            }
+            value = method.produce(context);
         }
         return value;
     }

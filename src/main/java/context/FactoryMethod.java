@@ -1,23 +1,22 @@
-package metadata;
+package context;
 
-import context.Context;
 import org.objectweb.asm.Type;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
-import static context.Utils.isStatic;
+import static org.objectweb.asm.Opcodes.ACC_STATIC;
 
-public class FactoryMethod {
+class FactoryMethod {
     private String className;
     private String methodName;
     private int access;
     private String desc;
     private String[] paramNames;
-    MethodHandle handle;
+    private MethodHandle handle;
 
-    public FactoryMethod(String className, String methodName, int access, String desc) {
+    FactoryMethod(String className, String methodName, int access, String desc) {
         this.className = className;
         this.methodName = methodName;
         this.access = access;
@@ -26,14 +25,14 @@ public class FactoryMethod {
         paramNames = new String[length];
     }
 
-    public void setParamNames(int index, String className) {
+    void setParamNames(int index, String className) {
         paramNames[index] = className;
     }
 
-    public void resolve() {
+    private void resolve() {
+        Class<?> klass = null;
         MethodHandles.Lookup lookup = MethodHandles.lookup();
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-        Class<?> klass = null;
         try {
             klass = classloader.loadClass(className);
         } catch (ClassNotFoundException e) {
@@ -42,26 +41,38 @@ public class FactoryMethod {
         }
 
         MethodType methodType = MethodType.fromMethodDescriptorString(desc, classloader);
-
         try {
-            if (methodName.equals("<init>")) {//constructor
-                handle = lookup.findConstructor(klass, methodType);
-            } else if (isStatic(access)) {   //static factoryMethod
-                handle = lookup.findStatic(klass, methodName, methodType);
+            if (methodName.equals("<init>")) {
+                handle = lookup.findConstructor(klass, methodType).asSpreader(Object[].class, paramNames.length);
+            } else if (isStatic(access)) {
+                handle = lookup.findStatic(klass, methodName, methodType).asSpreader(Object[].class, paramNames.length);
             } else {
-                handle = lookup.findVirtual(klass, methodName, methodType);
+                MethodHandle constructor = null;
+                try {
+                    constructor = lookup.findConstructor(klass, MethodType.methodType(void.class));
+                } catch (NoSuchMethodException e) {
+                    throw new RuntimeException("need a default constructor", e.getCause());
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException("constructor should be public", e.getCause());
+                }
+                Object o = null;
+                try {
+                    o = constructor.invoke();
+                } catch (Throwable throwable) {
+                    throwable.printStackTrace();
+                }
+                handle = lookup.findVirtual(klass, methodName, methodType).asSpreader(Object[].class, paramNames.length).bindTo(o);
             }
         } catch (NoSuchMethodException | IllegalAccessException e) {
             e.printStackTrace();
-            System.exit(1);
         }
+
     }
 
-    public Object produce(Context context) {
-
-        if(handle==null)
+    Object produce(Context context) {
+        if (handle == null)
             resolve();
-        
+
         int length = paramNames.length;
         Object[] parameters = new Object[length];
 
@@ -70,12 +81,15 @@ public class FactoryMethod {
         }
 
         try {
-            return handle.invokeWithArguments(parameters);
+            return handle.invoke(parameters);
         } catch (Throwable throwable) {
             throwable.printStackTrace();
-            System.exit(1);
+            return null;
         }
-
-        return null;
     }
+
+    private boolean isStatic(int acc) {
+        return (acc & ACC_STATIC) != 0;
+    }
+
 }

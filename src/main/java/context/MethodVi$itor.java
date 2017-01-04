@@ -1,26 +1,23 @@
 package context;
 
-import metadata.Bean;
-import metadata.FactoryMethod;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
 import static org.objectweb.asm.Opcodes.ASM4;
 
-public class MethodVi$itor extends MethodVisitor {
-    static final String beanDesc = Type.getDescriptor(Bean.class);
-    Context context;
-    FactoryMethod factoryMethod;
-    String beanName;
-    int index;
-    public MethodVi$itor(Context context, FactoryMethod factoryMethod) {
+class MethodVi$itor extends MethodVisitor {
+    private static final String beanDesc = Type.getDescriptor(Bean.class);
+    private Context context;
+    private FactoryMethod factoryMethod;
+    private String beanName;
+    private int index;
+
+    MethodVi$itor(Context context, FactoryMethod factoryMethod) {
         super(ASM4);
         this.context = context;
         this.factoryMethod = factoryMethod;
     }
-
-
 
     @Override
     public void visitParameter(String name, int access) {
@@ -40,9 +37,8 @@ public class MethodVi$itor extends MethodVisitor {
 
     @Override
     public void visitEnd() {
-
         if (beanName != null) {
-            context.addBean(beanName, new BeanWrapper(factoryMethod.resolve()));
+            context.addBean(beanName, new BeanWrapper(factoryMethod));
         }
     }
 }

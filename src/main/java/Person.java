@@ -1,8 +1,12 @@
-import metadata.Bean;
+import context.Bean;
 
 public class Person {
     String name;
     String number;
+
+    public Person() {
+
+    }
 
     @Bean("person")
     public Person(String name, String number) {
@@ -11,12 +15,12 @@ public class Person {
     }
 
     @Bean("name")
-    public static String fun1() {
+    public String fun1() {
         return "hehe";
     }
 
     @Bean("number")
-    public static String fun2() {
+    public String fun2() {
         return "1234567";
     }
 }
